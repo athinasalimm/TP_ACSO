@@ -1,0 +1,19 @@
+---
+triple:          'arm64-apple-darwin'
+binary-path:     tester
+relocations:
+  - { offsetInCU: 0x26, offset: 0x26, size: 0x8, addend: 0x0, symName: _main, symObjAddr: 0x0, symBinAddr: 0x100000DAC, symSize: 0x54 }
+  - { offsetInCU: 0x4D, offset: 0x4D, size: 0x8, addend: 0x0, symName: _filename_ej1, symObjAddr: 0x2C90, symBinAddr: 0x100008000, symSize: 0x0 }
+  - { offsetInCU: 0x5B, offset: 0x5B, size: 0x8, addend: 0x0, symName: _main, symObjAddr: 0x0, symBinAddr: 0x100000DAC, symSize: 0x54 }
+  - { offsetInCU: 0x74, offset: 0x74, size: 0x8, addend: 0x0, symName: _test_ej1a, symObjAddr: 0x54, symBinAddr: 0x100000E00, symSize: 0xCDC }
+  - { offsetInCU: 0xC2, offset: 0xC2, size: 0x8, addend: 0x0, symName: _test_ej1b, symObjAddr: 0xD30, symBinAddr: 0x100001ADC, symSize: 0x1BC4 }
+  - { offsetInCU: 0x26, offset: 0x422, size: 0x8, addend: 0x0, symName: _string_proc_list_create, symObjAddr: 0x0, symBinAddr: 0x1000036A0, symSize: 0x60 }
+  - { offsetInCU: 0x47, offset: 0x443, size: 0x8, addend: 0x0, symName: _string_proc_list_create, symObjAddr: 0x0, symBinAddr: 0x1000036A0, symSize: 0x60 }
+  - { offsetInCU: 0x6F, offset: 0x46B, size: 0x8, addend: 0x0, symName: _string_proc_node_create, symObjAddr: 0x60, symBinAddr: 0x100003700, symSize: 0x80 }
+  - { offsetInCU: 0xB3, offset: 0x4AF, size: 0x8, addend: 0x0, symName: _string_proc_list_add_node, symObjAddr: 0xE0, symBinAddr: 0x100003780, symSize: 0xCC }
+  - { offsetInCU: 0x11D, offset: 0x519, size: 0x8, addend: 0x0, symName: _string_proc_list_concat, symObjAddr: 0x1AC, symBinAddr: 0x10000384C, symSize: 0xD4 }
+  - { offsetInCU: 0x1A7, offset: 0x5A3, size: 0x8, addend: 0x0, symName: _str_concat, symObjAddr: 0x280, symBinAddr: 0x100003920, symSize: 0x90 }
+  - { offsetInCU: 0x215, offset: 0x611, size: 0x8, addend: 0x0, symName: _string_proc_list_destroy, symObjAddr: 0x310, symBinAddr: 0x1000039B0, symSize: 0x7C }
+  - { offsetInCU: 0x255, offset: 0x651, size: 0x8, addend: 0x0, symName: _string_proc_node_destroy, symObjAddr: 0x38C, symBinAddr: 0x100003A2C, symSize: 0x44 }
+  - { offsetInCU: 0x279, offset: 0x675, size: 0x8, addend: 0x0, symName: _string_proc_list_print, symObjAddr: 0x3D0, symBinAddr: 0x100003A70, symSize: 0xE8 }
+...

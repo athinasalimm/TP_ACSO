@@ -1,15 +1,63 @@
 #include "ej1.h"
 
+// char* str_concat(char* a, char* b);
+
 string_proc_list* string_proc_list_create(void){
+	string_proc_list* list = malloc(sizeof(string_proc_list));
+	if(list == NULL){
+		return NULL;
+	}
+	list->first = NULL;
+	list->last = NULL;
+	return list;
+
 }
 
 string_proc_node* string_proc_node_create(uint8_t type, char* hash){
+	string_proc_node* node = malloc(sizeof(string_proc_node));
+	if (node == NULL){
+		return NULL;
+	}
+	node->next = NULL;
+	node->previous = NULL;
+	node->type = type;
+	node->hash = hash;
+	return node;
 }
 
 void string_proc_list_add_node(string_proc_list* list, uint8_t type, char* hash){
+	string_proc_node* node = string_proc_node_create(type, hash);
+	if (node == NULL){
+		return;  //porq no retorna nada esta función!!
+	}
+	if(list->first == NULL && list->last == NULL){
+		list->first = node;
+		list->last = node;
+	}
+	else{
+		string_proc_node* curr_last_node = list->last;
+		
+		node->previous = curr_last_node;
+		list->last = node;
+	}
 }
 
 char* string_proc_list_concat(string_proc_list* list, uint8_t type , char* hash){
+    char* result = malloc(1); 
+    result[0] = '\0';
+    string_proc_node* current = list->first;
+    while (current != NULL) {
+        if (current->type == type) {
+            char* temp = str_concat(result, current->hash); 
+            free(result);  
+            result = temp; 
+        }
+        current = current->next;
+    }
+    char* final_result = str_concat(result, hash);
+    free(result);
+    result = final_result;
+    return result;
 }
 
 
