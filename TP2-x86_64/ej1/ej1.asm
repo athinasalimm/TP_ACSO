@@ -40,9 +40,11 @@ string_proc_node_create_asm:
     mov rbp, rsp
     sub rsp, 32
 
-    mov eax, edi         
+    ;mov eax, edi         
     mov [rbp - 32], rsi      
-    mov [rbp - 20], al
+    ;mov [rbp - 20], al
+
+    mov byte [rbp - 20], dil
 
     mov edi, 32          
     call malloc           
@@ -52,10 +54,12 @@ string_proc_node_create_asm:
 
 
     mov [rbp - 8], rax
-    mov rax, [rbp - 8]
+    ;mov rax, [rbp - 8]
 
     movzx edx, byte[rbp - 20]
+    mov rax, [rbp - 8]
     mov byte[rax + 16], dl
+
     mov rdx, [rbp - 32]
     mov [rax + 24], rdx
 
