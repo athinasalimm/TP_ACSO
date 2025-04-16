@@ -117,72 +117,94 @@ string_proc_list_add_node_asm:
 ; ---------------------------------------------
 
 string_proc_list_concat_asm:
-    push    rbp
-    mov     rbp, rsp
-    sub     rsp, 64
+    push rbp
+    mov rbp, rsp
+    sub rsp, 64
 
-    mov     [rbp-40], rdi         ; list
-    mov     [rbp-56], rdx         ; hash
-    mov     [rbp-44], sil         ; type
+    ; list -> [rbp-32]
+    ; type -> [rbp-40]
+    ; hash -> [rbp-48]
+    ; result -> [rbp-8]
+    ; current -> [rbp-16]
+    ; temp/final_result -> [rbp-24]
 
-    ; malloc(strlen(hash) + 1)
-    mov     rdi, [rbp-56]
-    call    strlen
-    add     rax, 1
-    mov     rdi, rax
-    call    malloc
-    mov     [rbp-8], rax
+    mov [rbp - 32], rdi       ; list
+    mov [rbp - 40], sil       ; type
+    mov [rbp - 48], rdx       ; hash
 
-    ; strcpy(result, hash)
-    mov     rdi, [rbp-8]
-    mov     rsi, [rbp-56]
-    call    strcpy
+    ; result = malloc(1)
+    mov rdi, 1
+    call malloc
+    test rax, rax
+    je .error
+    mov [rbp - 8], rax
+    mov byte [rax], 0         ; result[0] = '\0'
 
     ; current = list->first
-    mov     rax, [rbp-40]
-    mov     rax, [rax]
-    mov     [rbp-16], rax
+    mov rax, [rbp - 32]
+    mov rax, [rax]            ; current = list->first
+    mov [rbp - 16], rax
 
-.loop_fin:
-    cmp     qword [rbp-16], 0
-    je      .fin_loop
+.loop:
+    mov rax, [rbp - 16]
+    test rax, rax
+    je .after_loop
 
-.loop_cuerpo:
-    mov     rax, [rbp-16]
-    movzx   eax, byte [rax+16]
-    cmp     byte [rbp-44], al
-    jne     .saltar_concat
+    ; if (current->type == type)
+    movzx eax, byte [rax + 16] ; current->type
+    cmp al, byte [rbp - 40]
+    jne .skip_concat
 
-    ; temp = str_concat(result, current->hash)
-    mov     rax, [rbp-16]
-    mov     rsi, [rax+24]
-    mov     rdi, [rbp-8]
-    call    str_concat
-    mov     [rbp-24], rax
+    ; str_concat(result, current->hash)
+    mov rdi, [rbp - 8]        ; result
+    mov rsi, [rbp - 16]
+    mov rsi, [rsi + 24]       ; current->hash
+    call str_concat
+    test rax, rax
+    je .error
+    mov [rbp - 24], rax       ; temp
 
     ; free(result)
-    mov     rdi, [rbp-8]
-    call    free
+    mov rdi, [rbp - 8]
+    call free
 
     ; result = temp
-    mov     rax, [rbp-24]
-    mov     [rbp-8], rax
+    mov rax, [rbp - 24]
+    mov [rbp - 8], rax
 
-.saltar_concat:
-    mov     rax, [rbp-16]
-    mov     rax, [rax]
-    mov     [rbp-16], rax
-    jmp     .loop_fin
+.skip_concat:
+    ; current = current->next
+    mov rax, [rbp - 16]
+    mov rax, [rax]            ; current = current->next
+    mov [rbp - 16], rax
+    jmp .loop
 
-.fin_loop:
-    movzx   esi, byte [rbp-44]
-    mov     rdx, [rbp-8]
-    mov     rdi, [rbp-40]
-    call    string_proc_list_add_node_asm
+.after_loop:
+    ; final_result = str_concat(result, hash)
+    mov rdi, [rbp - 8]
+    mov rsi, [rbp - 48]
+    call str_concat
+    test rax, rax
+    je .error
+    mov [rbp - 24], rax
 
-    mov     rax, [rbp-8]
-    mov     rsp, rbp
-    pop     rbp
+    ; free(result)
+    mov rdi, [rbp - 8]
+    call free
+
+    ; result = final_result
+    mov rax, [rbp - 24]
+    mov [rbp - 8], rax
+
+    ; return result
+    mov rax, [rbp - 8]
+    mov rsp, rbp
+    pop rbp
     ret
 
-
+.error:
+    ; return NULL
+    xor rax, rax
+    mov rsp, rbp
+    pop rbp
+    ret
