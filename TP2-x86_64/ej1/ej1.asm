@@ -19,123 +19,164 @@ extern str_concat
 
 
 string_proc_list_create_asm:
-    mov rdi, 16         
-    call malloc          
-
-    test rax, rax       
-    je .return_null      
-
-    mov qword [rax], 0       
-
-    mov qword [rax + 8], 0   
-
-    ret
-
-.return_null:
-    xor rax, rax        
-    ret
-
-string_proc_node_create_asm:
-    movzx rcx, dil       
-    mov rdx, rsi         
-
-    mov rdi, 32
+    ; malloc(sizeof(string_proc_list)) --> 16
+    mov rdi, 16
     call malloc
-
     test rax, rax
     je .return_null
 
-    mov qword [rax + 0], 0      
-    mov qword [rax + 8], 0      
-    mov byte  [rax + 16], cl   
-    mov qword [rax + 24], rdx   
-
+    ; Guardamos rax en rbx porque vamos a modificar rax luego
+    mov rbx, rax
+    ; list->first = NULL
+    mov qword [rbx], 0
+    ; list->last = NULL
+    mov qword [rbx + 8], 0
+    mov rax, rbx
     ret
 
 .return_null:
-    xor rax, rax        
-    ret 
-
-string_proc_list_add_node_asm:
-    mov rbx, rdi        
-    movzx rcx, sil      
-    mov r8, rdx         
-
-    movzx rdi, cl
-    mov rsi, r8
-    call string_proc_node_create_asm
-
-    test rax, rax
-    je .fin          
-
-    mov r9, rax         
-
-    mov rax, [rbx]
-    mov rdx, [rbx + 8]
-
-    test rax, rax
-    jne .lista_no_vacia
-    test rdx, rdx
-    jne .lista_no_vacia
-
-    mov [rbx], r9       
-    mov [rbx + 8], r9   
-    jmp .fin
-
-.lista_no_vacia:
-    mov rax, [rbx + 8]
-
-    mov [rax + 0], r9
-
-    mov [r9 + 8], rax
-
-    mov [rbx + 8], r9
-
-.fin:
+    xor rax, rax
     ret
 
-string_proc_list_concat_asm:
-    mov rbx, rdi         ; rbx ← lista
-    movzx rcx, sil       ; rcx ← type a filtrar
-    mov r8, rdx          ; r8 ← extra_hash (char*)
 
-    ; Reservamos espacio para un string vacío inicial
+
+
+
+string_proc_node_create_asm:
+    ; malloc(sizeof(string_proc_node)) --> 32
+    mov rdi, 32
+    call malloc
+    test rax, rax
+    je .return_null
+
+    ; Guardamos puntero del nodo en rbx
+    mov rbx, rax
+
+    ; node->next = NULL
+    mov qword [rbx], 0
+    ; node->previous = NULL
+    mov qword [rbx + 8], 0
+    ; node->type = diluido en 1 byte (3er argumento -> dl)
+    mov byte [rbx + 16], dl
+    ; node->hash = rdx (4to argumento en rcx, pero ya movido a rdx por convención)
+    mov qword [rbx + 24], rsi
+
+    mov rax, rbx
+    ret
+
+.return_null:
+    xor rax, rax
+    ret
+
+
+
+
+
+string_proc_list_add_node_asm:
+    ; Argumentos:
+    ; rdi = list
+    ; sil = type
+    ; rdx = hash
+
+    ; Guardamos list en rbx
+    mov rbx, rdi
+
+    ; Preparamos argumentos para string_proc_node_create
+    movzx edi, sil   ; type en edi
+    mov rsi, rdx     ; hash
+    call string_proc_node_create
+    test rax, rax
+    je .return       ; si es NULL, return
+
+    ; guardamos node en rcx
+    mov rcx, rax
+
+    ; if (list->first == NULL && list->last == NULL)
+    mov rax, [rbx]
+    mov rdx, [rbx + 8]
+    test rax, rax
+    jne .else_case
+    test rdx, rdx
+    jne .else_case
+
+    ; list->first = node
+    mov [rbx], rcx
+    ; list->last = node
+    mov [rbx + 8], rcx
+    jmp .return
+
+.else_case:
+    ; curr_last = list->last
+    mov rax, [rbx + 8]
+
+    ; curr_last->next = node
+    mov [rax], rcx
+
+    ; node->previous = curr_last
+    mov [rcx + 8], rax
+
+    ; list->last = node
+    mov [rbx + 8], rcx
+
+.return:
+    ret
+
+
+
+
+string_proc_list_concat:
+    ; malloc(1)
     mov rdi, 1
     call malloc
-    mov byte [rax], 0     ; string vacío → '\0'
-    mov r9, rax           ; r9 ← resultado parcial
+    test rax, rax
+    je .return_null
 
-    mov r10, [rbx]        ; r10 ← primer nodo
+    ; rax contiene puntero, lo guardamos en rbx
+    mov rbx, rax
+    mov byte [rbx], 0     ; result[0] = '\0'
+
+    ; current = list->first
+    mov r8, [rdi]
 
 .loop:
-    test r10, r10
-    je .concat_extra_hash
+    test r8, r8
+    je .after_loop
 
-    movzx r11, byte [r10 + 16]   ; r11 ← nodo->type
-    cmp r11b, cl
-    jne .skip_concat             ; si no es del tipo deseado, salteamos
+    ; if (current->type == type)
+    mov al, [r8 + 16]
+    cmp al, sil
+    jne .skip_concat
 
-    ; concatenamos r9 con nodo->hash
-    mov rdi, r9                  ; primer string
-    mov rsi, [r10 + 24]          ; segundo string (hash)
-    mov r12, r9                  ; salvamos r9 para liberarlo después
-    call str_concat              ; rax ← nuevo string concatenado
-    mov r9, rax
-    mov rdi, r12
+    ; str_concat(result, current->hash)
+    mov rdi, rbx
+    mov rsi, [r8 + 24]
+    call str_concat
+
+    ; free(result)
+    mov rdi, rbx
     call free
+
+    ; result = temp (en rax)
+    mov rbx, rax
 
 .skip_concat:
-    mov r10, [r10 + 0]           ; siguiente nodo
+    ; current = current->next
+    mov r8, [r8]
     jmp .loop
 
-.concat_extra_hash:
-    mov rdi, r9                  ; primer string (resultado parcial)
-    mov rsi, r8                  ; string adicional
-    mov r12, r9
-    call str_concat              ; concatenamos
-    mov r9, rax
-    mov rdi, r12
+.after_loop:
+    ; final_result = str_concat(result, hash)
+    mov rdi, rbx
+    mov rsi, rdx
+    call str_concat
+
+    ; free(result)
+    mov rdi, rbx
     call free
 
-    mov rax, r9                  ; devolvemos el string final
+    ; return final_result
+    ret
+
+.return_null:
+    xor rax, rax
     ret
