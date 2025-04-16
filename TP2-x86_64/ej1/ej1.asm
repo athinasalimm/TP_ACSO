@@ -64,55 +64,43 @@ string_proc_node_create_asm:
     ret
 
 ; ---------------------------------------------
-
 string_proc_list_add_node_asm:
-    push    rbp
-    mov     rbp, rsp
-    sub     rsp, 48
+    mov rbx, rdi        
+    movzx rcx, sil      
+    mov r8, rdx         
 
-    mov     [rbp-24], rdi         ; list
-    mov     [rbp-40], rdx         ; hash
-    mov     [rbp-28], sil         ; type
+    movzx rdi, cl
+    mov rsi, r8
+    call string_proc_node_create_asm
 
-    movzx   edi, byte [rbp-28]
-    mov     rsi, [rbp-40]
-    call    string_proc_node_create_asm
-    mov     [rbp-8], rax          ; node
+    test rax, rax
+    je .fin          
 
-    mov     rax, [rbp-24]
-    mov     rax, [rax]
-    test    rax, rax
-    jne     .nodo_existente
+    mov r9, rax         
 
-    ; lista vacía
-    mov     rax, [rbp-24]
-    mov     rdx, [rbp-8]
-    mov     [rax], rdx
-    mov     rax, [rbp-24]
-    mov     rdx, [rbp-8]
-    mov     [rax+8], rdx
-    jmp     .fin_agregar
+    mov rax, [rbx]
+    mov rdx, [rbx + 8]
 
-.nodo_existente:
-    mov     rax, [rbp-24]
-    mov     rax, [rax+8]
-    mov     rdx, [rbp-8]
-    mov     [rax], rdx
+    test rax, rax
+    jne .lista_no_vacia
+    test rdx, rdx
+    jne .lista_no_vacia
 
-    mov     rax, [rbp-24]
-    mov     rdx, [rax+8]
-    mov     rax, [rbp-8]
-    mov     [rax+8], rdx
+    mov [rbx], r9       
+    mov [rbx + 8], r9   
+    jmp .fin
 
-    mov     rax, [rbp-24]
-    mov     rdx, [rbp-8]
-    mov     [rax+8], rdx
+.lista_no_vacia:
+    mov rax, [rbx + 8]
 
-.fin_agregar:
-    mov     rsp, rbp
-    pop     rbp
+    mov [rax + 0], r9
+
+    mov [r9 + 8], rax
+
+    mov [rbx + 8], r9
+
+.fin:
     ret
-
 ; ---------------------------------------------
 
 string_proc_list_concat_asm:
