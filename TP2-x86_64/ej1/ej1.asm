@@ -39,10 +39,10 @@ string_proc_list_create_asm:
 string_proc_node_create_asm:
     push    rbp
     mov     rbp, rsp
-    sub     rsp, 8           ; espacio para guardar hash
+    sub     rsp, 16              ; espacio para salvar hash y alinear stack
 
-    movzx   ecx, dil         ; type → cl
-    mov     [rbp-8], rsi     ; guardamos hash en stack
+    mov     [rbp-8], rsi         ; guardar hash
+    movzx   ecx, dil             ; type (byte) → cl
 
     mov     edi, 32
     call    malloc
@@ -50,12 +50,12 @@ string_proc_node_create_asm:
     test    rax, rax
     je      .return_null
 
-    mov     qword [rax + 0], 0      ; next
-    mov     qword [rax + 8], 0      ; previous
-    mov     byte  [rax + 16], cl    ; type
+    mov     qword [rax + 0], 0       ; next = NULL
+    mov     qword [rax + 8], 0       ; previous = NULL
+    mov     byte  [rax + 16], cl     ; type = cl
 
-    mov     rdx, [rbp-8]            ; recuperamos hash
-    mov     qword [rax + 24], rdx   ; hash
+    mov     rdx, [rbp-8]             ; recuperar hash
+    mov     qword [rax + 24], rdx    ; hash
 
     leave
     ret
