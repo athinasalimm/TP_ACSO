@@ -37,26 +37,33 @@ string_proc_list_create_asm:
 ; ---------------------------------------------
 
 string_proc_node_create_asm:
-    movzx  rcx, dil       ; type → cl (usamos luego cl para mover el byte)
-    mov    r8, rsi        ; guardamos hash en r8, que no se pisa con call
+    push    rbp
+    mov     rbp, rsp
+    sub     rsp, 8           ; espacio para guardar hash
 
-    mov    rdi, 32        ; malloc(32)
-    call   malloc
+    movzx   ecx, dil         ; type → cl
+    mov     [rbp-8], rsi     ; guardamos hash en stack
 
-    test   rax, rax
-    je     .return_null
+    mov     edi, 32
+    call    malloc
 
-    mov    qword [rax + 0], 0      ; next = NULL
-    mov    qword [rax + 8], 0      ; previous = NULL
-    mov    byte  [rax + 16], cl    ; type
-    mov    qword [rax + 24], r8    ; hash
+    test    rax, rax
+    je      .return_null
 
+    mov     qword [rax + 0], 0      ; next
+    mov     qword [rax + 8], 0      ; previous
+    mov     byte  [rax + 16], cl    ; type
+
+    mov     rdx, [rbp-8]            ; recuperamos hash
+    mov     qword [rax + 24], rdx   ; hash
+
+    leave
     ret
 
 .return_null:
-    xor    rax, rax
+    xor     rax, rax
+    leave
     ret
-
 
 ; ---------------------------------------------
 
