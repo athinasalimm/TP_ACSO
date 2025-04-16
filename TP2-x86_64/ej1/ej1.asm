@@ -61,7 +61,7 @@ string_proc_list_add_node_asm:
     movzx rcx, sil      
     mov r8, rdx         
 
-    movzx rdi, cl
+    mov rdi, cl
     mov rsi, r8
     call string_proc_node_create_asm
 
