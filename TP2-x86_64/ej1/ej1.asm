@@ -119,15 +119,7 @@ string_proc_list_add_node_asm:
 string_proc_list_concat_asm:
     push rbp
     mov rbp, rsp
-    sub rsp, 64                    ; Reservamos espacio en stack
-
-    ; Stack layout:
-    ; [rbp - 8]   = list
-    ; [rbp - 16]  = type (uint8_t)
-    ; [rbp - 24]  = original hash
-    ; [rbp - 32]  = result string (concatenado)
-    ; [rbp - 40]  = current node
-    ; [rbp - 48]  = temp string (nuevo result después de concat)
+    sub rsp, 64                    
 
     ; Guardamos argumentos
     mov [rbp - 8], rdi             ; list
@@ -196,7 +188,6 @@ string_proc_list_concat_asm:
     jmp .loop
 
 .done:
-    ; Agregar nuevo nodo a la lista con el string concatenado
     movzx ecx, byte [rbp - 16]     ; type
     mov rdx, [rbp - 32]            ; result (hash)
     mov rax, [rbp - 8]             ; list
@@ -204,13 +195,11 @@ string_proc_list_concat_asm:
     mov rdi, rax
     call string_proc_list_add_node_asm
 
-    ; Devolver el string concatenado
     mov rax, [rbp - 32]
     leave
     ret
 
 .concat_fail:
-    ; liberar result si falló str_concat
     mov rdi, [rbp - 32]
     call free
     xor rax, rax
