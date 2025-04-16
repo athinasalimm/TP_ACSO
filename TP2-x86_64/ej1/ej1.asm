@@ -121,15 +121,26 @@ string_proc_list_concat_asm:
     mov rbp, rsp
     sub rsp, 64                    ; Reservamos espacio en stack
 
+    ; Stack layout:
+    ; [rbp - 8]   = list
+    ; [rbp - 16]  = type (uint8_t)
+    ; [rbp - 24]  = original hash
+    ; [rbp - 32]  = result string (concatenado)
+    ; [rbp - 40]  = current node
+    ; [rbp - 48]  = temp string (nuevo result después de concat)
+
     ; Guardamos argumentos
     mov [rbp - 8], rdi             ; list
-    mov byte [rbp - 16], sil
+    mov byte [rbp - 16], sil       ; type (como byte directo)
     mov [rbp - 24], rdx            ; hash
 
     ; Verificamos si list o hash son NULL
-    cmp qword [rbp - 8], 0
+    mov rax, [rbp - 8]
+    test rax, rax
     je .return_null
-    cmp qword [rbp - 24], 0
+
+    mov rax, [rbp - 24]
+    test rax, rax
     je .return_null
 
     ; Obtener longitud de hash
@@ -153,24 +164,23 @@ string_proc_list_concat_asm:
     mov [rbp - 40], rax            ; current
 
 .loop:
-    cmp qword [rbp - 40], 0
+    mov rax, [rbp - 40]
+    test rax, rax
     je .done
 
     ; if current->type == type
-    mov rax, [rbp - 40]
     movzx eax, byte [rax + 16]
     cmp al, byte [rbp - 16]
     jne .skip_concat
 
     ; Llamamos a str_concat(result, current->hash)
     mov rax, [rbp - 40]
-    mov rdx, [rax + 24]
-    mov rdi, [rbp - 32]
-    mov rsi, rdx
+    mov rsi, [rax + 24]           ; current->hash
+    mov rdi, [rbp - 32]           ; result
     call str_concat
     test rax, rax
     je .concat_fail
-    mov [rbp - 48], rax            ; nuevo result
+    mov [rbp - 48], rax           ; nuevo result
 
     ; liberar viejo result
     mov rdi, [rbp - 32]
@@ -181,7 +191,7 @@ string_proc_list_concat_asm:
 .skip_concat:
     ; current = current->next
     mov rax, [rbp - 40]
-    mov rax, [rax]
+    mov rax, [rax]                ; current->next
     mov [rbp - 40], rax
     jmp .loop
 
@@ -203,11 +213,11 @@ string_proc_list_concat_asm:
     ; liberar result si falló str_concat
     mov rdi, [rbp - 32]
     call free
-    mov rax, 0
+    xor rax, rax
     leave
     ret
 
 .return_null:
-    mov rax, 0
+    xor rax, rax
     leave
     ret
