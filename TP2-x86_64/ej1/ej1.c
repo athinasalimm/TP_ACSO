@@ -34,30 +34,40 @@ void string_proc_list_add_node(string_proc_list* list, uint8_t type, char* hash)
 		list->last = node;
 	}
 	else{
-		string_proc_node* curr_last_node = list->last;
-		curr_last_node->next = node;
-		node->previous = curr_last_node;
+		node->previous = list->last;
+		list->last->next = node;
 		list->last = node;
 	}
 }
 
 char* string_proc_list_concat(string_proc_list* list, uint8_t type , char* hash){
-    char* result = malloc(1); 
-    result[0] = '\0';
-    string_proc_node* current = list->first;
+	if (list == NULL || hash == NULL) {
+		return NULL;
+	}
+
+	size_t len_hash = strlen(hash);
+    char* result = malloc(len_hash + 1); 
+	if (result == NULL){
+		return NULL;
+	}
+	strcpy(result, hash);
+
+	string_proc_node* current = list->first;
+
     while (current != NULL) {
         if (current->type == type) {
             char* temp = str_concat(result, current->hash); 
-            free(result);  
+            free(result); 
+			if (temp == NULL){
+				return NULL;
+			}
             result = temp; 
         }
         current = current->next;
     }
-    char* final_result = str_concat(result, hash);
-    free(result);
-    result = final_result;
     return result;
 }
+
 
 
 /* AUX FUNCTIONS */
