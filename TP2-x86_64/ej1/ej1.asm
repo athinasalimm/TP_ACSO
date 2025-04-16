@@ -123,8 +123,7 @@ string_proc_list_concat_asm:
 
     ; Guardamos argumentos
     mov [rbp - 8], rdi             ; list
-    movzx eax, sil
-    mov [rbp - 16], al             ; type
+    mov byte [rbp - 16], sil
     mov [rbp - 24], rdx            ; hash
 
     ; Verificamos si list o hash son NULL
