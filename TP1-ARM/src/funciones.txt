@@ -1,0 +1,8 @@
+Instrucciones a implementar 
+
+ 
+CBNZ 
+cbnz X3, label 
+. 
+. 
+label (descripción: saltar a label, si X3 no es 0)
