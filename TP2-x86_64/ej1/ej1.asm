@@ -15,8 +15,7 @@ section .text
     extern str_concat
 
 ; ---------------------------------------------
-; string_proc_list_create_asm
-; ---------------------------------------------
+
 string_proc_list_create_asm:
     push    rbp
     mov     rbp, rsp
@@ -36,8 +35,7 @@ string_proc_list_create_asm:
     ret
 
 ; ---------------------------------------------
-; string_proc_node_create_asm
-; ---------------------------------------------
+
 string_proc_node_create_asm:
     push    rbp
     mov     rbp, rsp
@@ -67,8 +65,7 @@ string_proc_node_create_asm:
     ret
 
 ; ---------------------------------------------
-; string_proc_list_add_node_asm
-; ---------------------------------------------
+
 string_proc_list_add_node_asm:
     push    rbp
     mov     rbp, rsp
@@ -118,8 +115,7 @@ string_proc_list_add_node_asm:
     ret
 
 ; ---------------------------------------------
-; string_proc_list_concat_asm
-; ---------------------------------------------
+
 string_proc_list_concat_asm:
     push    rbp
     mov     rbp, rsp
