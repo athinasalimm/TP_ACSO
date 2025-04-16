@@ -115,10 +115,15 @@ string_proc_list_concat_asm:
     cmp r11b, cl
     jne .skip_concat             ; si no es del tipo deseado, salteamos
 
-    ; concatenamos r9 con nodo->hash
-    mov rdi, r9                  ; primer string
-    mov rsi, [r10 + 24]          ; segundo string (hash)
-    mov r12, r9                  ; salvamos r9 para liberarlo después
+    ; Validar que el hash no sea NULL
+    mov rax, [r10 + 24]          ; rax ← nodo->hash
+    test rax, rax
+    je .skip_concat              ; si es NULL, no concatenar
+
+    ; Concatenar el string actual con el hash del nodo
+    mov rsi, rax                 ; segundo string (hash)
+    mov rdi, r9                  ; primer string acumulado
+    mov r12, r9                  ; salvamos r9 para liberar después
     call str_concat              ; rax ← nuevo string concatenado
     mov r9, rax
     mov rdi, r12
@@ -129,13 +134,14 @@ string_proc_list_concat_asm:
     jmp .loop
 
 .concat_extra_hash:
-    mov rdi, r9                  ; primer string (resultado parcial)
+    ; Concatenar el resultado acumulado con el hash extra
+    mov rdi, r9                  ; primer string acumulado
     mov rsi, r8                  ; string adicional
     mov r12, r9
-    call str_concat              ; concatenamos
+    call str_concat
     mov r9, rax
     mov rdi, r12
     call free
 
-    mov rax, r9                  ; devolvemos el string final
+    mov rax, r9                  ; devolver string final
     ret
