@@ -1,7 +1,5 @@
 #include "ej1.h"
 
-// char* str_concat(char* a, char* b);
-
 string_proc_list* string_proc_list_create(void){
 	string_proc_list* list = malloc(sizeof(string_proc_list));
 	if(list == NULL){
@@ -28,7 +26,7 @@ string_proc_node* string_proc_node_create(uint8_t type, char* hash){
 void string_proc_list_add_node(string_proc_list* list, uint8_t type, char* hash){
 	string_proc_node* node = string_proc_node_create(type, hash);
 	if (node == NULL){
-		return;  //porq no retorna nada esta función!!
+		return;  
 	}
 	if(list->first == NULL && list->last == NULL){
 		list->first = node;
@@ -36,7 +34,7 @@ void string_proc_list_add_node(string_proc_list* list, uint8_t type, char* hash)
 	}
 	else{
 		string_proc_node* curr_last_node = list->last;
-		
+		curr_last_node->next = node;
 		node->previous = curr_last_node;
 		list->last = node;
 	}
@@ -61,11 +59,9 @@ char* string_proc_list_concat(string_proc_list* list, uint8_t type , char* hash)
 }
 
 
-/** AUX FUNCTIONS **/
+/* AUX FUNCTIONS */
 
 void string_proc_list_destroy(string_proc_list* list){
-
-	/* borro los nodos: */
 	string_proc_node* current_node	= list->first;
 	string_proc_node* next_node		= NULL;
 	while(current_node != NULL){
@@ -73,7 +69,6 @@ void string_proc_list_destroy(string_proc_list* list){
 		string_proc_node_destroy(current_node);
 		current_node	= next_node;
 	}
-	/*borro la lista:*/
 	list->first = NULL;
 	list->last  = NULL;
 	free(list);
@@ -111,4 +106,3 @@ void string_proc_list_print(string_proc_list* list, FILE* file){
                 current_node = current_node->next;
         }
 }
-
