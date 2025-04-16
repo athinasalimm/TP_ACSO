@@ -57,52 +57,43 @@ string_proc_node_create_asm:
     ret 
 
 string_proc_list_add_node_asm:
-    push rbx              ; salvamos registros usados
-    push r9
+    mov rbx, rdi        
+    movzx rcx, sil      
+    mov r8, rdx         
 
-    mov rbx, rdi          ; rbx ← list*
-    movzx r9, sil         ; r9 ← type (uint8_t)
-    mov r10, rdx          ; r10 ← hash (char*)
-
-    ; llamar a string_proc_node_create_asm(r9, r10)
-    movzx rdi, r9         ; dil ← type
-    mov rsi, r10          ; rsi ← hash
+    movzx rdi, cl
+    mov rsi, r8
     call string_proc_node_create_asm
 
     test rax, rax
-    je .fin
+    je .fin          
 
-    ; rax = nodo nuevo
-    mov r9, rax           ; r9 ← nodo
+    mov r9, rax         
 
-    mov rax, [rbx]        ; first
-    mov rdx, [rbx + 8]    ; last
+    mov rax, [rbx]
+    mov rdx, [rbx + 8]
 
     test rax, rax
     jne .lista_no_vacia
     test rdx, rdx
     jne .lista_no_vacia
 
-    ; lista vacía
-    mov [rbx], r9         ; first = nodo
-    mov [rbx + 8], r9     ; last = nodo
-    jmp .fin_pop
+    mov [rbx], r9       
+    mov [rbx + 8], r9   
+    jmp .fin
 
 .lista_no_vacia:
-    mov rax, [rbx + 8]    ; last
+    mov rax, [rbx + 8]
 
-    mov [rax + 0], r9     ; last->next = nuevo
-    mov [r9 + 8], rax     ; nuevo->prev = last
-    mov [rbx + 8], r9     ; last = nuevo
+    mov [rax + 0], r9
 
-.fin_pop:
-    pop r9
-    pop rbx
+    mov [r9 + 8], rax
+
+    mov [rbx + 8], r9
 
 .fin:
     ret
 
-    
 string_proc_list_concat_asm:
     mov rbx, rdi         ; rbx ← lista
     movzx rcx, sil       ; rcx ← type a filtrar
@@ -124,15 +115,10 @@ string_proc_list_concat_asm:
     cmp r11b, cl
     jne .skip_concat             ; si no es del tipo deseado, salteamos
 
-    ; Validar que el hash no sea NULL
-    mov rax, [r10 + 24]          ; rax ← nodo->hash
-    test rax, rax
-    je .skip_concat              ; si es NULL, no concatenar
-
-    ; Concatenar el string actual con el hash del nodo
-    mov rsi, rax                 ; segundo string (hash)
-    mov rdi, r9                  ; primer string acumulado
-    mov r12, r9                  ; salvamos r9 para liberar después
+    ; concatenamos r9 con nodo->hash
+    mov rdi, r9                  ; primer string
+    mov rsi, [r10 + 24]          ; segundo string (hash)
+    mov r12, r9                  ; salvamos r9 para liberarlo después
     call str_concat              ; rax ← nuevo string concatenado
     mov r9, rax
     mov rdi, r12
@@ -143,14 +129,13 @@ string_proc_list_concat_asm:
     jmp .loop
 
 .concat_extra_hash:
-    ; Concatenar el resultado acumulado con el hash extra
-    mov rdi, r9                  ; primer string acumulado
+    mov rdi, r9                  ; primer string (resultado parcial)
     mov rsi, r8                  ; string adicional
     mov r12, r9
-    call str_concat
+    call str_concat              ; concatenamos
     mov r9, rax
     mov rdi, r12
     call free
 
-    mov rax, r9                  ; devolver string final
+    mov rax, r9                  ; devolvemos el string final
     ret
