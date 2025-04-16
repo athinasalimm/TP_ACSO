@@ -137,4 +137,5 @@ string_proc_list_concat_asm:
     mov rdi, r9
     call free
 
+    mov rax, r9     ; ✅ ESTA es la que importa
     ret
