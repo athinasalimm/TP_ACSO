@@ -1,7 +1,7 @@
 Athina Salim - asalim@udesa.edu.ar
 Como desactivé cada fase de la bomba:
 
-Fase 1:
+Fase 1: Junta esperencia en la vida  Porque nada ensenha tanto Como el sufrir y el llorar
 
 Esta fase compara el input del usuario con una frase almacenada en memoria. Usando GDB, coloqué un breakpoint en la dirección 0x401de7, 
 al comienzo de la función phase_1, y observé que se llamaba a strings_not_equal, pasándole como argumentos el string ingresado y una cadena fija 
@@ -9,7 +9,7 @@ almacenada en la dirección contenida en el registro rsi. Para ver cuál era esa
 print (char*)$rsi, lo que me permitió ver exactamente qué esperaba el programa. Como la bomba explota si las frases no coinciden carácter por carácter,
 ingresé esa misma frase como input y la fase se desactivó correctamente.
 
-Fase 2:
+Fase 2: -1 0 -1
 
 Esta fase toma tres números como input, los convierte con strtoq y luego hace operaciones entre ellos. 
 Usé GDB, coloqué un breakpoint en el comienzo de phase_2 y seguí paso a paso cómo se iban guardando los valores.
@@ -19,7 +19,7 @@ Vi que el tercer número era pasado a una función llamada misterio, y que ahí 
 Entonces resumiendo, el input debía cumplir dos condiciones: el tercer número (c) tenía que ser igual a (a ^ b) >> 1 y ser negativo. 
 Probando, encontré que el input -1 0 -1 cumple con ambas, y así logré desactivar la fase.
 
-Fase 3:
+Fase 3: sesionar 9 (luego para fase secreta -> sesionar 9 abrete_sesamo)
 
 Esta fase toma una palabra y un número como input, y realiza una búsqueda binaria sobre un arreglo de strings cargados desde un archivo.
 Usé GDB y puse un breakpoint en la instrucción donde se llama a strcmp (en la dirección 0x401fe7, dentro de cuenta) para ver qué palabra se estaba
@@ -29,7 +29,7 @@ por lo que debía acertar entre las iteraciones 7 y 11. Usé un breakpoint condi
 la iteración 9, y luego con print (char*)$rsi descubrí que la palabra comparada en ese paso era "sesionar". Finalmente, ingresando "sesionar 9" 
 como input, desactivé correctamente la fase.
 
-Fase 4:
+Fase 4: eeeepj
 
 Esta fase pedía ingresar una cadena de 6 caracteres. Usé GDB y coloqué un breakpoint al inicio de phase_4 (en 0x402138) para ver qué hacía el código.
 Ahí encontré que el input se recorría letra por letra, y a cada carácter se le aplicaba un & 15 para obtener un índice entre 0 y 15.
@@ -39,9 +39,10 @@ input, y si la suma total no daba 45, explotaba la bomba. A partir de eso, busqu
 elegí letras tales que su código ASCII al hacer & 15 me diera los índices correctos. Encontré que el input "eeeepj" funcionaba, y así 
 desactivé la fase.
 
-Fase Secreta:
+Fase Secreta: 
 
-Como la encontré: 
+Como la encontré: abrete_sesamo
+
 Para descubrir cómo acceder a la fase secreta, observé que en el main se llamaba a la función phase_defused después de completar cada fase. 
 Por eso, decidí poner un breakpoint en esa función con la idea de interceptar su ejecución y analizar qué ocurría luego de cada fase. 
 Fui ingresando inputs normalmente: primero para la fase 1, después para la 2, y cuando llegué a la fase 3, 
@@ -53,7 +54,7 @@ Cada vez que aparecía una llamada a strings_not_equal, usaba el comando x/s $rs
 Así, tras varias iteraciones con ni, llegué a una línea clave en la que rsi apuntaba a la cadena "abrete_sesamo". Ingrese en la fase 3 mi input 
 de siempre junto a abrete_sesamo y desbloquee la fase secreta. 
 
-Como la desactivé:
+Como la desactivé: 50
 
 Para desactivar la bomba en la fase secreta, primero observé qué hacía la función secret_phase. Lo que hacia era tomar un número como input, 
 lo convertía con strtoq y lo pasaba como argumento a la función fun7, junto con un puntero (n1) (raíz de un árbol binario). 
