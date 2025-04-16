@@ -23,6 +23,25 @@ extern strlen
 
 
 string_proc_list_create_asm:
+    push    rbp
+    mov     rbp, rsp
+    sub     rsp, 16
+
+    mov     edi, 16
+    call    malloc
+    mov     [rbp-8], rax
+    mov     rax, [rbp-8]
+    mov     qword [rax], NULL
+    mov     rax, [rbp-8]
+    mov     qword [rax+8], NULL
+    mov     rax, [rbp-8]
+
+    mov     rsp, rbp
+    pop     rbp
+    ret
+
+
+string_proc_list_create_asm: MALO
     mov rdi, 16         
     call malloc          
 
