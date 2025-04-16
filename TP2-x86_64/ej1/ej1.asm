@@ -57,43 +57,52 @@ string_proc_node_create_asm:
     ret 
 
 string_proc_list_add_node_asm:
-    mov rbx, rdi        
-    movzx rcx, sil      
-    mov r8, rdx         
+    push rbx              ; salvamos registros usados
+    push r9
 
-    mov rdi, cl
-    mov rsi, r8
+    mov rbx, rdi          ; rbx ← list*
+    movzx r9, sil         ; r9 ← type (uint8_t)
+    mov r10, rdx          ; r10 ← hash (char*)
+
+    ; llamar a string_proc_node_create_asm(r9, r10)
+    movzx rdi, r9         ; dil ← type
+    mov rsi, r10          ; rsi ← hash
     call string_proc_node_create_asm
 
     test rax, rax
-    je .fin          
+    je .fin
 
-    mov r9, rax         
+    ; rax = nodo nuevo
+    mov r9, rax           ; r9 ← nodo
 
-    mov rax, [rbx]
-    mov rdx, [rbx + 8]
+    mov rax, [rbx]        ; first
+    mov rdx, [rbx + 8]    ; last
 
     test rax, rax
     jne .lista_no_vacia
     test rdx, rdx
     jne .lista_no_vacia
 
-    mov [rbx], r9       
-    mov [rbx + 8], r9   
-    jmp .fin
+    ; lista vacía
+    mov [rbx], r9         ; first = nodo
+    mov [rbx + 8], r9     ; last = nodo
+    jmp .fin_pop
 
 .lista_no_vacia:
-    mov rax, [rbx + 8]
+    mov rax, [rbx + 8]    ; last
 
-    mov [rax + 0], r9
+    mov [rax + 0], r9     ; last->next = nuevo
+    mov [r9 + 8], rax     ; nuevo->prev = last
+    mov [rbx + 8], r9     ; last = nuevo
 
-    mov [r9 + 8], rax
-
-    mov [rbx + 8], r9
+.fin_pop:
+    pop r9
+    pop rbx
 
 .fin:
     ret
 
+    
 string_proc_list_concat_asm:
     mov rbx, rdi         ; rbx ← lista
     movzx rcx, sil       ; rcx ← type a filtrar
