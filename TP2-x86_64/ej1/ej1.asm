@@ -117,72 +117,75 @@ string_proc_list_add_node_asm:
 ; ---------------------------------------------
 
 string_proc_list_concat_asm:
-    push    rbp
-    mov     rbp, rsp
-    sub     rsp, 64
+    push rbp
+    mov rbp, rsp
+    sub rsp, 64
 
-    mov     [rbp-40], rdi         ; list
-    mov     [rbp-56], rdx         ; hash
-    mov     [rbp-44], sil         ; type
+    ; Guardar argumentos
+    mov [rbp - 32], rdi      ; list
+    mov [rbp - 40], sil      ; type
+    mov [rbp - 48], rdx      ; hash
 
-    ; malloc(strlen(hash) + 1)
-    mov     rdi, [rbp-56]
-    call    strlen
-    add     rax, 1
-    mov     rdi, rax
-    call    malloc
-    mov     [rbp-8], rax
-
-    ; strcpy(result, hash)
-    mov     rdi, [rbp-8]
-    mov     rsi, [rbp-56]
-    call    strcpy
+    ; result = malloc(1)
+    mov rdi, 1
+    call malloc
+    mov [rbp - 8], rax       ; result
+    mov byte [rax], 0        ; result[0] = '\0'
 
     ; current = list->first
-    mov     rax, [rbp-40]
-    mov     rax, [rax]
-    mov     [rbp-16], rax
+    mov rax, [rbp - 32]      ; list
+    mov rax, [rax]           ; list->first
+    mov [rbp - 16], rax      ; current
 
-.loop_fin:
-    cmp     qword [rbp-16], 0
-    je      .fin_loop
+.loop_start:
+    mov rax, [rbp - 16]
+    test rax, rax
+    je .fin_loop             ; if current == NULL → terminar
 
-.loop_cuerpo:
-    mov     rax, [rbp-16]
-    movzx   eax, byte [rax+16]
-    cmp     byte [rbp-44], al
-    jne     .saltar_concat
+    ; Comparar current->type con tipo
+    movzx eax, byte [rax + 16]   ; current->type
+    cmp al, byte [rbp - 40]
+    jne .skip_concat
 
-    ; temp = str_concat(result, current->hash)
-    mov     rax, [rbp-16]
-    mov     rsi, [rax+24]
-    mov     rdi, [rbp-8]
-    call    str_concat
-    mov     [rbp-24], rax
+    ; str_concat(result, current->hash)
+    mov rdi, [rbp - 8]       ; result
+    mov rsi, [rbp - 16]      ; current
+    mov rsi, [rsi + 24]      ; current->hash
+    call str_concat
+    mov [rbp - 24], rax      ; temp
 
     ; free(result)
-    mov     rdi, [rbp-8]
-    call    free
+    mov rdi, [rbp - 8]
+    call free
 
     ; result = temp
-    mov     rax, [rbp-24]
-    mov     [rbp-8], rax
+    mov rax, [rbp - 24]
+    mov [rbp - 8], rax
 
-.saltar_concat:
-    mov     rax, [rbp-16]
-    mov     rax, [rax]
-    mov     [rbp-16], rax
-    jmp     .loop_fin
+.skip_concat:
+    ; current = current->next
+    mov rax, [rbp - 16]
+    mov rax, [rax]           ; current->next
+    mov [rbp - 16], rax
+    jmp .loop_start
 
 .fin_loop:
-    movzx   esi, byte [rbp-44]
-    mov     rdx, [rbp-8]
-    mov     rdi, [rbp-40]
-    call    string_proc_list_add_node_asm
+    ; final_result = str_concat(result, hash)
+    mov rdi, [rbp - 8]
+    mov rsi, [rbp - 48]
+    call str_concat
+    mov [rbp - 24], rax
 
-    mov     rax, [rbp-8]
-    mov     rsp, rbp
-    pop     rbp
+    ; free(result)
+    mov rdi, [rbp - 8]
+    call free
+
+    ; result = final_result
+    mov rax, [rbp - 24]
+    mov [rbp - 8], rax
+
+    ; devolver result
+    mov rax, [rbp - 8]
+    mov rsp, rbp
+    pop rbp
     ret
-
-
