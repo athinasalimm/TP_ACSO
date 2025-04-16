@@ -81,10 +81,9 @@ string_proc_list_add_node_asm:
     ; Guardamos list en rbx
     mov rbx, rdi
 
-    ; Preparamos argumentos para string_proc_node_create
     movzx edi, sil   ; type en edi
     mov rsi, rdx     ; hash
-    call string_proc_node_create
+    call string_proc_node_create_asm
     test rax, rax
     je .return       ; si es NULL, return
 
