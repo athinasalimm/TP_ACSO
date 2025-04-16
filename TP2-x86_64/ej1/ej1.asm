@@ -39,10 +39,8 @@ string_proc_node_create_asm:
     push rbp
     mov rbp, rsp
     sub rsp, 32
-
-    ;mov eax, edi         
+   
     mov [rbp - 32], rsi      
-    ;mov [rbp - 20], al
 
     mov byte [rbp - 20], dil
 
@@ -54,7 +52,6 @@ string_proc_node_create_asm:
 
 
     mov [rbp - 8], rax
-    ;mov rax, [rbp - 8]
 
     movzx edx, byte[rbp - 20]
     mov rax, [rbp - 8]
@@ -73,8 +70,8 @@ string_proc_node_create_asm:
     ret
 
 .return_null:
-    mov rax, 0        
-    mov rsp, rbp 
+    xor rax, rax
+    mov rsp, rbp
     pop rbp
     ret
 
