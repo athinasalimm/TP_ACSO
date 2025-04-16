@@ -36,25 +36,33 @@ string_proc_list_create_asm:
 
 ; ---------------------------------------------
 string_proc_node_create_asm:
-    movzx rcx, dil       
-    mov rdx, rsi         
+    push    rbp
+    mov     rbp, rsp
+    sub     rsp, 32
 
-    mov rdi, 32
-    call malloc
+    mov     [rbp-32], rsi     ; hash
+    mov     [rbp-20], dil     ; type
 
-    test rax, rax
-    je .return_null
+    mov     edi, 32
+    call    malloc
+    mov     [rbp-8], rax
+    mov     rax, [rbp-8]
 
-    mov qword [rax + 0], 0      
-    mov qword [rax + 8], 0      
-    mov byte  [rax + 16], cl   
-    mov qword [rax + 24], rdx   
+    mov     qword [rax], NULL          ; next
+    mov     qword [rax+8], NULL        ; previous
 
+    movzx   edx, byte [rbp-20]
+    mov     byte [rax+16], dl          ; type
+
+    mov     rdx, [rbp-32]
+    mov     qword [rax+24], rdx        ; hash
+
+    mov     rax, [rbp-8]
+
+    mov     rsp, rbp
+    pop     rbp
     ret
 
-.return_null:
-    xor rax, rax        
-    ret 
 ; ---------------------------------------------
 string_proc_list_add_node_asm:
     mov rbx, rdi        
