@@ -121,12 +121,11 @@ string_proc_list_concat_asm:
     mov rbp, rsp
     sub rsp, 64                    
 
-    ; Guardamos argumentos
-    mov [rbp - 8], rdi             ; list
-    mov byte [rbp - 16], sil       ; type (como byte directo)
-    mov [rbp - 24], rdx            ; hash
+    mov [rbp - 8], rdi            
+    mov byte [rbp - 16], sil        
+    mov [rbp - 24], rdx           
 
-    ; Verificamos si list o hash son NULL
+    
     mov rax, [rbp - 8]
     test rax, rax
     je .return_null
@@ -135,62 +134,59 @@ string_proc_list_concat_asm:
     test rax, rax
     je .return_null
 
-    ; Obtener longitud de hash
+    ;saco longitud de hash
     mov rdi, [rbp - 24]
     call strlen
-    add rax, 1                     ; espacio para '\0'
+    add rax, 1                     
     mov rdi, rax
     call malloc
     test rax, rax
     je .return_null
-    mov [rbp - 32], rax            ; result
+    mov [rbp - 32], rax            
 
-    ; strcpy(result, hash)
+    ;strcpy(result, hash)
     mov rsi, [rbp - 24]
     mov rdi, [rbp - 32]
     call strcpy
 
-    ; current = list->first
+    ;current = list->first
     mov rax, [rbp - 8]
     mov rax, [rax]
-    mov [rbp - 40], rax            ; current
+    mov [rbp - 40], rax            
 
 .loop:
     mov rax, [rbp - 40]
     test rax, rax
     je .done
 
-    ; if current->type == type
     movzx eax, byte [rax + 16]
     cmp al, byte [rbp - 16]
     jne .skip_concat
 
-    ; Llamamos a str_concat(result, current->hash)
     mov rax, [rbp - 40]
-    mov rsi, [rax + 24]           ; current->hash
-    mov rdi, [rbp - 32]           ; result
+    mov rsi, [rax + 24]        
+    mov rdi, [rbp - 32]        
     call str_concat
     test rax, rax
     je .concat_fail
-    mov [rbp - 48], rax           ; nuevo result
+    mov [rbp - 48], rax           
 
-    ; liberar viejo result
     mov rdi, [rbp - 32]
     call free
     mov rax, [rbp - 48]
     mov [rbp - 32], rax
 
 .skip_concat:
-    ; current = current->next
+
     mov rax, [rbp - 40]
-    mov rax, [rax]                ; current->next
+    mov rax, [rax]                
     mov [rbp - 40], rax
     jmp .loop
 
 .done:
-    movzx ecx, byte [rbp - 16]     ; type
-    mov rdx, [rbp - 32]            ; result (hash)
-    mov rax, [rbp - 8]             ; list
+    movzx ecx, byte [rbp - 16]     
+    mov rdx, [rbp - 32]            
+    mov rax, [rbp - 8]             
     mov esi, ecx
     mov rdi, rax
     call string_proc_list_add_node_asm
