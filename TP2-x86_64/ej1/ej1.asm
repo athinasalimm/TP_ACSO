@@ -36,40 +36,45 @@ string_proc_list_create_asm:
 
 ; ---------------------------------------------
 string_proc_node_create_asm:
-    push    rbp
-    mov     rbp, rsp
+    push rbp
+    mov rbp, rsp
+    sub rsp, 32
 
-    ; Guardamos 'type' (viene en DIL) y 'hash' (en RSI)
-    movzx   rcx, dil         ; pasamos 'type' a 64 bits → RCX
-    mov     rdx, rsi         ; guardamos 'hash' en RDX
+    mov eax, edi         
+    mov [rbp - 32], rsi      
+    mov [rbp - 20], al
 
-    ; malloc(32)
-    mov     edi, 32          ; malloc espera tamaño en EDI
-    call    malloc           ; resultado en RAX
+    mov edi, 32          
+    call malloc           
 
-    test    rax, rax
-    je      .return_null     ; si malloc devuelve NULL → terminamos
+    test rax, rax
+    je .return_null    
 
-    ; RAX = puntero al nodo
-    ; node->next = NULL
-    mov     qword [rax + 0], 0
 
-    ; node->previous = NULL
-    mov     qword [rax + 8], 0
+    mov [rbp - 8], rax
+    mov rax, [rbp - 8]
 
-    ; node->type = type (1 byte en offset 16)
-    mov     byte [rax + 16], cl    ; usamos CL que es la parte baja de RCX
+    movzx edx, byte[rbp - 20]
+    mov byte[rax + 16], dl
+    mov rdx, [rbp - 32]
+    mov [rax + 24], rdx
 
-    ; node->hash = hash
-    mov     qword [rax + 24], rdx
+    mov qword[rax], 0
 
-    leave
+    mov qword[rax+8], 0
+
+    mov rax, [rbp - 8]
+    mov rsp, rbp
+    pop rbp
     ret
 
 .return_null:
-    xor     rax, rax        ; pone NULL (0) en RAX
-    leave
+    mov rax, 0        
+    mov rsp, rbp 
+    pop rbp
     ret
+
+
 ; ---------------------------------------------
 string_proc_list_add_node_asm:
     mov rbx, rdi        
