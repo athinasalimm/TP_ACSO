@@ -7,7 +7,7 @@
 /**
  * TODO
  */
-// int inode_iget(struct unixfilesystem *fs, int inumber, struct inode *inp) {
+int inode_iget(struct unixfilesystem *fs, int inumber, struct inode *inp) {
 //     if (inumber < 1) return -1;
 
 //     int inodesPerSector = DISKIMG_SECTOR_SIZE / sizeof(struct inode);
@@ -21,8 +21,8 @@
 //     struct inode *inodes = (struct inode *)buffer;
 //     *inp = inodes[index];
 
-//     return 0;
-// }
+    return 0;
+}
 
 /**
  * TODO
