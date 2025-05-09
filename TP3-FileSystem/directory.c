@@ -34,11 +34,11 @@ int directory_findname(struct unixfilesystem *fs, const char *name,
 
       for (int j = 0; j < entries; j++) {
           if (strncmp(entry[j].d_name, name, DIR_NAME_SIZE) == 0) {
-              *dirEnt = entry[j];  // copiar la entrada encontrada
+              *dirEnt = entry[j];  
               return 0;
           }
       }
   }
 
-  return -1;  // no se encontró
+  return -1;  
 }

@@ -11,6 +11,9 @@ int inode_iget(struct unixfilesystem *fs, int inumber, struct inode *inp) {
     if (inumber < 1) return -1;
 
     int inodesPerSector = DISKIMG_SECTOR_SIZE / sizeof(struct inode);
+    int totalInodes = fs->superblock.s_isize * inodesPerSector;
+    if (inumber > totalInodes) return -1;
+
     int sector = INODE_START_SECTOR + (inumber - 1) / inodesPerSector;
 
     unsigned char buffer[DISKIMG_SECTOR_SIZE];

@@ -13,6 +13,10 @@ int file_getblock(struct unixfilesystem *fs, int inumber, int fileBlockNum, void
     if (inode_iget(fs, inumber, &in) < 0)
         return -1;
 
+    if ((in.i_mode & IALLOC) == 0)
+    return -1;  // ❗ Inodo no asignado (archivo inexistente)
+
+
     int size = inode_getsize(&in);
     int totalBlocks = (size + DISKIMG_SECTOR_SIZE - 1) / DISKIMG_SECTOR_SIZE;
 
