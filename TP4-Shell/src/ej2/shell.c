@@ -4,6 +4,7 @@
 #include <sys/wait.h>
 #include <string.h>
 #include <ctype.h>
+#include <wordexp.h>
 
 #define MAX_COMMANDS 205
 #define MAX_ARGS 64
@@ -34,34 +35,20 @@ int has_syntax_error(char *line) {
 
 // Parsea argumentos respetando comillas dobles
 void parse_args(char *cmd, char **args) {
-    int j = 0;
-    int in_quotes = 0;
-    char *start = NULL;
-    for (char *p = cmd; ; ++p) {
-        if (*p == '"' && (p == cmd || *(p - 1) != '\\')) {
-            if (!in_quotes) {
-                in_quotes = 1;
-                start = p + 1;
-            } else {
-                *p = '\0';
-                args[j++] = start;
-                in_quotes = 0;
-                start = NULL;
-            }
-        } else if (!in_quotes && (*p == ' ' || *p == '\t' || *p == '\0')) {
-            if (start) {
-                *p = '\0';
-                args[j++] = start;
-                start = NULL;
-            }
-        } else if (!start && *p != ' ' && *p != '\t') {
-            start = p;
-        }
-        if (*p == '\0') break;
+    wordexp_t p;
+    if (wordexp(cmd, &p, 0) != 0) {
+        fprintf(stderr, "Error al parsear argumentos\n");
+        exit(1);
     }
-    args[j] = NULL;
-    if (j > MAX_ARGS) {
-        fprintf(stderr, "Error: demasiados argumentos\n");
+
+    for (int i = 0; i < p.we_wordc && i < MAX_COMMANDS - 1; i++) {
+        args[i] = p.we_wordv[i];
+    }
+    args[p.we_wordc] = NULL;
+
+    if (p.we_wordc > MAX_COMMANDS - 1) {
+        fprintf(stderr, "Demasiados argumentos\n");
+        wordfree(&p);
         exit(1);
     }
 }
