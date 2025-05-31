@@ -3,36 +3,71 @@
 #include <unistd.h>
 #include <sys/wait.h>
 #include <string.h>
+#include <ctype.h>
 
 #define MAX_COMMANDS 205
+#define MAX_ARGS 64
 
-// Función para eliminar espacios iniciales y finales
+// Elimina espacios iniciales y finales
 char *trim(char *str) {
-    while (*str == ' ') str++;  // Espacios al inicio
+    while (*str == ' ' || *str == '\t') str++;
     char *end = str + strlen(str) - 1;
-    while (end > str && *end == ' ') *end-- = '\0';  // Espacios al final
+    while (end > str && (*end == ' ' || *end == '\t')) *end-- = '\0';
     return str;
 }
 
-// Función para separar un comando en sus argumentos
+// Verifica errores de sintaxis básicos
+int has_syntax_error(char *line) {
+    char *p = line;
+    int last_was_pipe = 1;  // al principio, es como si hubiera un pipe
+    while (*p) {
+        if (*p == '|') {
+            if (last_was_pipe) return 1; // pipe vacío o doble
+            last_was_pipe = 1;
+        } else if (!isspace(*p)) {
+            last_was_pipe = 0;
+        }
+        p++;
+    }
+    return last_was_pipe;  // termina en pipe → error
+}
+
+// Parsea argumentos respetando comillas dobles
 void parse_args(char *cmd, char **args) {
     int j = 0;
-    args[j] = strtok(cmd, " ");
-    while (args[j] != NULL) {
-        // Eliminar comillas si están al inicio y final
-        if (args[j][0] == '"' && args[j][strlen(args[j]) - 1] == '"') {
-            args[j][strlen(args[j]) - 1] = '\0';  // Corto la comilla del final
-            args[j]++;  // Avanzo uno para saltear la comilla del principio
+    int in_quotes = 0;
+    char *start = NULL;
+    for (char *p = cmd; ; ++p) {
+        if (*p == '"' && (p == cmd || *(p - 1) != '\\')) {
+            if (!in_quotes) {
+                in_quotes = 1;
+                start = p + 1;
+            } else {
+                *p = '\0';
+                args[j++] = start;
+                in_quotes = 0;
+                start = NULL;
+            }
+        } else if (!in_quotes && (*p == ' ' || *p == '\t' || *p == '\0')) {
+            if (start) {
+                *p = '\0';
+                args[j++] = start;
+                start = NULL;
+            }
+        } else if (!start && *p != ' ' && *p != '\t') {
+            start = p;
         }
-
-        j++;
-        args[j] = strtok(NULL, " ");
+        if (*p == '\0') break;
     }
     args[j] = NULL;
+    if (j > MAX_ARGS) {
+        fprintf(stderr, "Error: demasiados argumentos\n");
+        exit(1);
+    }
 }
 
 int main() {
-    char command[256];
+    char command[1024];
     char *commands[MAX_COMMANDS];
     int command_count = 0;
 
@@ -40,71 +75,61 @@ int main() {
         if (isatty(STDIN_FILENO)) {
             printf("Shell> ");
         }
-        
-        // Leer línea de comando
+
         if (fgets(command, sizeof(command), stdin) == NULL) {
-            printf("\n");  // Ctrl+D
+            printf("\n");
             break;
         }
 
-        // Eliminar salto de línea
         command[strcspn(command, "\n")] = '\0';
+        if (strcmp(command, "exit") == 0) break;
 
-        // Salir con "exit"
-        if (strcmp(command, "exit") == 0) {
-            break;
+        if (has_syntax_error(command)) {
+            fprintf(stderr, "Error de sintaxis\n");
+            continue;
         }
 
         // Separar por pipes
-        char *token = strtok(command, "|");
         command_count = 0;
-        while (token != NULL) {
-            commands[command_count++] = trim(token);  // limpia espacios
+        char *token = strtok(command, "|");
+        while (token != NULL && command_count < MAX_COMMANDS) {
+            commands[command_count++] = trim(token);
             token = strtok(NULL, "|");
         }
 
-        // Crear pipes
         int pipes[2 * (command_count - 1)];
         for (int i = 0; i < command_count - 1; i++) {
             if (pipe(pipes + i * 2) == -1) {
-                perror("Pipe failed");
+                perror("pipe");
                 exit(1);
             }
         }
 
-        // Ejecutar comandos
         for (int i = 0; i < command_count; i++) {
             pid_t pid = fork();
             if (pid < 0) {
-                perror("Fork failed");
+                perror("fork");
                 exit(1);
             }
 
             if (pid == 0) {
-                // Redirigir entrada si no es el primer comando
                 if (i > 0) {
-                    if (dup2(pipes[(i - 1) * 2], STDIN_FILENO) == -1) {
-                        perror("dup2 stdin failed");
-                        exit(1);
-                    }
+                    dup2(pipes[(i - 1) * 2], STDIN_FILENO);
                 }
-
-                // Redirigir salida si no es el último comando
                 if (i < command_count - 1) {
-                    if (dup2(pipes[i * 2 + 1], STDOUT_FILENO) == -1) {
-                        perror("dup2 stdout failed");
-                        exit(1);
-                    }
+                    dup2(pipes[i * 2 + 1], STDOUT_FILENO);
                 }
-
-                // Cerrar todos los pipes
                 for (int j = 0; j < 2 * (command_count - 1); j++) {
                     close(pipes[j]);
                 }
 
-                // Parsear el comando en args y ejecutar
-                char *args[MAX_COMMANDS];
+                char *args[MAX_ARGS + 1];
                 parse_args(commands[i], args);
+
+                if (args[0] == NULL) {
+                    fprintf(stderr, "Comando vacío\n");
+                    exit(1);
+                }
 
                 execvp(args[0], args);
                 perror("execvp failed");
@@ -112,12 +137,10 @@ int main() {
             }
         }
 
-        // Cerrar todos los pipes en el padre
         for (int i = 0; i < 2 * (command_count - 1); i++) {
             close(pipes[i]);
         }
 
-        // Esperar que terminen todos los hijos
         for (int i = 0; i < command_count; i++) {
             wait(NULL);
         }
