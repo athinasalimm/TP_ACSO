@@ -13,8 +13,35 @@ int main(int argc, char **argv)
 	if (argc != 4){ printf("Uso: anillo <n> <c> <s> \n"); exit(0);}
     
     /* Parsing of arguments */
-  	/* TO COMPLETE */
+  	n = atoi(argv[1]);    
+    buffer[0] = atoi(argv[2]); 
+    start = atoi(argv[3]); 
     printf("Se crearán %i procesos, se enviará el caracter %i desde proceso %i \n", n, buffer[0], start);
-    
-   	/* You should start programming from here... */
+
+    int pipes[2 * n];
+
+    for (int i = 0; i < n; i++) pipe(pipes + i * 2); 
+
+    for (int i = 0; i < n; i++) {
+        if (fork() == 0) {
+            if (i == 0) {  
+                buffer[0] += 1;
+                write(pipes[i * 2 + 1], buffer, sizeof(int));
+            } else {  
+                read(pipes[(i - 1) * 2], buffer, sizeof(int));
+                buffer[0] += 1;
+                write(pipes[i * 2 + 1], buffer, sizeof(int));
+            }
+            close(pipes[i * 2]);
+            close(pipes[i * 2 + 1]);
+            exit(0);
+        }
+    }
+
+    if (start == 0) write(pipes[1], buffer, sizeof(int));  
+    read(pipes[(n - 1) * 2], buffer, sizeof(int));  
+    for (int i = 0; i < n; i++) wait(NULL);  
+
+    printf("Resultado final: %i\n", buffer[0]);
+    return 0;
 }
