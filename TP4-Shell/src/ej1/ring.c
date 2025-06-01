@@ -3,7 +3,7 @@
 #include <unistd.h>
 #include <sys/wait.h>
 
-//deje en comentarios los prints que me fueron ayudando a entender mejor el anillo y donde estaba haciendo cosas mal 
+//dejé en comentarios los prints que me fueron ayudando a entender mejor el anillo y donde estaba haciendo cosas mal 
 
 int main(int argc, char **argv) {
     if (argc != 4) {
