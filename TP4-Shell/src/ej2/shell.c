@@ -197,7 +197,6 @@ int parse_args(char *cmd, char **args) {
     char *p = cmd;
 
     while (*p) {
-        // Saltar espacios iniciales
         while (isspace(*p)) p++;
         if (*p == '\0') break;
 
@@ -206,16 +205,30 @@ int parse_args(char *cmd, char **args) {
             return -1;
         }
 
-        // Si comienza con comillas (simples o dobles)
         if (*p == '"' || *p == '\'') {
             char quote = *p++;
-            args[argc++] = p;
-            while (*p && *p != quote) p++;
-            if (*p == '\0') {
+            char *start = p;
+            char *out = p;
+
+            while (*p) {
+                if (*p == '\\' && *(p + 1)) {
+                    *out++ = *p++;
+                    *out++ = *p++;
+                } else if (*p == quote) {
+                    break;
+                } else {
+                    *out++ = *p++;
+                }
+            }
+
+            if (*p != quote) {
                 fprintf(stderr, "Error: comillas sin cerrar\n");
                 return -1;
             }
-            *p++ = '\0'; // cerrar argumento
+
+            *out = '\0'; // null terminator
+            args[argc++] = start;
+            p++; // saltear la comilla de cierre
         } else {
             args[argc++] = p;
             while (*p && !isspace(*p)) p++;
