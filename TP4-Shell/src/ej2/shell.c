@@ -99,7 +99,8 @@ int main() {
     char *commands[MAX_COMMANDS];
     int command_count = 0;
     while (1) {
-        if (isatty(STDIN_FILENO)) printf("Shell> ");
+        // if (isatty(STDIN_FILENO)) printf("Shell> ");
+        printf("Shell> ");
         if (fgets(command, sizeof(command), stdin) == NULL) {
             printf("\n");
             break;
