@@ -167,12 +167,35 @@
 #define MAX_COMMANDS 200
 #define MAX_ARGS 64
 
+
 // Elimina espacios iniciales y finales
 char *trim(char *str) {
     while (*str == ' ' || *str == '\t') str++;
     char *end = str + strlen(str) - 1;
     while (end > str && (*end == ' ' || *end == '\t')) *end-- = '\0';
     return str;
+}
+
+int split_commands_respecting_quotes(char *line, char **commands) {
+    int count = 0;
+    char *start = line;
+    int in_single_quote = 0, in_double_quote = 0;
+
+    for (char *p = line; *p; p++) {
+        if (*p == '\'' && !in_double_quote) {
+            in_single_quote = !in_single_quote;
+        } else if (*p == '"' && !in_single_quote) {
+            in_double_quote = !in_double_quote;
+        } else if (*p == '|' && !in_single_quote && !in_double_quote) {
+            *p = '\0';
+            commands[count++] = trim(start);
+            start = p + 1;
+            if (count >= MAX_COMMANDS) break;
+        }
+    }
+
+    commands[count++] = trim(start); // último comando
+    return count;
 }
 
 // Verifica errores de sintaxis como pipes vacios, duplicados o al inicio/final
@@ -262,11 +285,7 @@ int main() {
         }
 
         command_count = 0;
-        char *token = strtok(command, "|");
-        while (token != NULL && command_count < MAX_COMMANDS) {
-            commands[command_count++] = trim(token);
-            token = strtok(NULL, "|");
-        }
+        command_count = split_commands_respecting_quotes(command, commands);
 
         int pipes[2 * (command_count - 1)];
         for (int i = 0; i < command_count - 1; i++) {
