@@ -6,6 +6,25 @@
 // #include <ctype.h>
 // #include <wordexp.h>
 
+// Parsea argumentos usando wordexp (maneja comillas, tabs, espacios, etc.)
+// int parse_args(char *cmd, char **args) {
+//     wordexp_t p;
+//     if (wordexp(cmd, &p, 0) != 0) {
+//         fprintf(stderr, "Error al parsear argumentos\n");
+//         return -1;
+//     }
+//     if (p.we_wordc > MAX_ARGS) {
+//         fprintf(stderr, "Demasiados argumentos\n");
+//         wordfree(&p);
+//         return -1;
+//     }
+//     for (int i = 0; i < p.we_wordc; i++) {
+//         args[i] = p.we_wordv[i];
+//     }
+//     args[p.we_wordc] = NULL;
+//     return 0;
+// }
+
 // #define MAX_COMMANDS 205
 // #define MAX_ARGS 64
 
@@ -143,7 +162,7 @@
 #include <sys/wait.h>
 #include <string.h>
 #include <ctype.h>
-#include <wordexp.h>
+#include <stdbool.h>
 
 #define MAX_COMMANDS 200
 #define MAX_ARGS 64
@@ -172,22 +191,39 @@ int has_syntax_error(char *line) {
     return last_was_pipe;
 }
 
-// Parsea argumentos usando wordexp (maneja comillas, tabs, espacios, etc.)
+
 int parse_args(char *cmd, char **args) {
-    wordexp_t p;
-    if (wordexp(cmd, &p, 0) != 0) {
-        fprintf(stderr, "Error al parsear argumentos\n");
-        return -1;
+    int argc = 0;
+    char *p = cmd;
+
+    while (*p) {
+        // Saltar espacios iniciales
+        while (isspace(*p)) p++;
+        if (*p == '\0') break;
+
+        if (argc > MAX_ARGS) {
+            fprintf(stderr, "Demasiados argumentos\n");
+            return -1;
+        }
+
+        // Si comienza con comillas (simples o dobles)
+        if (*p == '"' || *p == '\'') {
+            char quote = *p++;
+            args[argc++] = p;
+            while (*p && *p != quote) p++;
+            if (*p == '\0') {
+                fprintf(stderr, "Error: comillas sin cerrar\n");
+                return -1;
+            }
+            *p++ = '\0'; // cerrar argumento
+        } else {
+            args[argc++] = p;
+            while (*p && !isspace(*p)) p++;
+            if (*p) *p++ = '\0';
+        }
     }
-    if (p.we_wordc > MAX_ARGS) {
-        fprintf(stderr, "Demasiados argumentos\n");
-        wordfree(&p);
-        return -1;
-    }
-    for (int i = 0; i < p.we_wordc; i++) {
-        args[i] = p.we_wordv[i];
-    }
-    args[p.we_wordc] = NULL;
+
+    args[argc] = NULL;
     return 0;
 }
 
