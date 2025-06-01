@@ -164,7 +164,7 @@
 #include <ctype.h>
 #include <stdbool.h>
 
-#define MAX_COMMANDS 200
+#define MAX_COMMANDS 30
 #define MAX_ARGS 64
 
 
