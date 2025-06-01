@@ -145,7 +145,7 @@
 #include <ctype.h>
 #include <wordexp.h>
 
-#define MAX_COMMANDS 205
+#define MAX_COMMANDS 200
 #define MAX_ARGS 64
 
 // Elimina espacios iniciales y finales
@@ -179,7 +179,7 @@ int parse_args(char *cmd, char **args) {
         fprintf(stderr, "Error al parsear argumentos\n");
         return -1;
     }
-    if (p.we_wordc >= MAX_ARGS) {
+    if (p.we_wordc > MAX_ARGS) {
         fprintf(stderr, "Demasiados argumentos\n");
         wordfree(&p);
         return -1;
