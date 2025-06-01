@@ -201,7 +201,7 @@ int parse_args(char *cmd, char **args) {
         while (isspace(*p)) p++;
         if (*p == '\0') break;
 
-        if (argc > MAX_ARGS) {
+        if (argc >= MAX_ARGS) {
             fprintf(stderr, "Demasiados argumentos\n");
             return -1;
         }
