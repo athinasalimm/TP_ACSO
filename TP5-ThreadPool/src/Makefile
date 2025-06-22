@@ -3,18 +3,18 @@ CXX = g++
 CXXFLAGS = -std=c++11 -Wall -pthread -g
 
 # Build target
-TARGET = test_custom
+TARGET = threadpool
+SRC = thread-pool.cc Semaphore.cc main.cc
 
 # Default target
 all: $(TARGET)
 
-# Build the main target
-$(TARGET): thread-pool.cc Semaphore.cc test_custom.cc
+# Main compilation rule
+$(TARGET): $(SRC)
 	$(CXX) $(CXXFLAGS) -o $@ $^
 
-# Custom build target (como lo espera tester.sh)
-custom:
-	$(CXX) $(CXXFLAGS) -o $(TARGET) thread-pool.cc Semaphore.cc test_custom.cc
+# Rule expected by tester.sh
+custom: $(TARGET)
 
 # Clean up build artifacts
 clean:
