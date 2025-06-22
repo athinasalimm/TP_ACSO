@@ -1146,4 +1146,4 @@ int main() {
     return global_success ? 0 : 1;
 }
 
-//Aclaro que a este tester no lo hice yo! Lo hizo un compañero de la catedra, yo lo use para correr mi tp.
+//Aclaro que a este tester no lo hice yo! Lo hizo un compañero de la catedra, yo lo use para probar mi tp.
