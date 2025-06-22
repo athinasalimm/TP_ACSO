@@ -20,21 +20,21 @@ ThreadPool::ThreadPool(size_t numThreads) : wts(numThreads), done(false) {
 }
 
 void ThreadPool::schedule(const function<void(void)>& thunk) {
-    if (!thunk) {
-        throw invalid_argument("No se puede encolar una función nula (nullptr).");
-    }
-    if (done) return;
+    if (!thunk) throw invalid_argument("Thunk es null");
+
     {
         unique_lock<mutex> lock(queueLock);
+        if (done) throw runtime_error("ThreadPool es destruido");
         tareas.push(thunk);
     }
+
     {
         unique_lock<mutex> lock(mutex_wait);
         ++tareas_en_progreso;
     }
+
     sem_tareas.signal();  
 }
-
 
 void ThreadPool::worker(int i) {
     while (true) {
@@ -99,27 +99,27 @@ void ThreadPool::wait() {
 
 ThreadPool::~ThreadPool() {
     wait();  
-    {
-        lock_guard<mutex> lock(mutex_wait);
-        lock_guard<mutex> lock2(queueLock);
-        done = true;
 
-        // marcar los thunks como nulos
-        {
-            lock_guard<mutex> lock(workerLock);
-            for (size_t i = 0; i < wts.size(); ++i) {
-                wts[i].thunk = nullptr;
-            }
+    // 🔐 Proteger done con el mismo mutex que schedule() usa
+    {
+        lock_guard<mutex> lock(queueLock);
+        done = true;
+    }
+
+    // 🔄 Opcional: marcar thunks como nullptr (ya lo hacés)
+    {
+        lock_guard<mutex> lock(workerLock);
+        for (size_t i = 0; i < wts.size(); ++i) {
+            wts[i].thunk = nullptr;
         }
     }
 
-    // Despertar dispatcher (por si está en sem_tareas.wait())
-    for (size_t i = 0; i < wts.size(); ++i)
-        sem_tareas.signal();
+    // 🚨 Despertar dispatcher
+    sem_tareas.signal();
 
     if (dt.joinable()) dt.join();
 
-    // Despertar todos los workers
+    // 🧠 Despertar workers
     for (size_t i = 0; i < wts.size(); ++i)
         wts[i].sem_trabajar.signal();
 
@@ -128,4 +128,3 @@ ThreadPool::~ThreadPool() {
             wts[i].ts.join();
     }
 }
-
