@@ -72,7 +72,7 @@ class ThreadPool {
     void dispatcher();
     thread dt;                              // dispatcher thread handle
     vector<worker_t> wts;                   // worker thread handles. you may want to change/remove this
-    bool done;                              // flag to indicate the pool is being destroyed
+    atomic<bool> done;                      // flag to indicate the pool is being destroyed
     mutex queueLock;                        // mutex to protect the queue of tasks
 
 
@@ -85,8 +85,8 @@ class ThreadPool {
     queue<int> workers_libres;        // cola de IDs de workers libres
     Semaphore sem_workers{0};         // cuenta cuántos workers están libres
     mutex workerLock;                 // protege la cola de workers_libres
-  
-    /* ThreadPools are the type of thing that shouldn't be cloneable, since it's
+
+    /**
     * not clear what it means to clone a ThreadPool (should copies of all outstanding
     * functions to be executed be copied?).
     *
