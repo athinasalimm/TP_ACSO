@@ -16,6 +16,7 @@
 #include <vector>      // for vector
 #include "Semaphore.h" // for Semaphor
 #include <queue>
+#include <atomic>
 
 using namespace std;
 
