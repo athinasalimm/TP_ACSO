@@ -1,23 +1,17 @@
-# Compiler settings
+# Compiler settings - Can change to clang++ if preferred
 CXX = g++
 CXXFLAGS = -std=c++11 -Wall -pthread -g
 
-# Build target
+# Build targets
 TARGET = threadpool
 SRC = thread-pool.cc Semaphore.cc main.cc
 
-# Default target
-all: $(TARGET)
-
-# Main compilation rule
+# Link the target with object files
 $(TARGET): $(SRC)
 	$(CXX) $(CXXFLAGS) -o $@ $^
 
-# Rule expected by tester.sh
-custom: $(TARGET)
-
 # Clean up build artifacts
 clean:
-	rm -f $(TARGET)
+	rm -f $(TARGET) $(OBJ)
 
-.PHONY: all clean custom
+.PHONY: all clean
